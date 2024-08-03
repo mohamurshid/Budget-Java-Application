@@ -22,7 +22,7 @@ public class BudgetApp extends JFrame {
 
     private void setupLoginScreen() {
         setTitle("Login / Sign Up");
-        setSize(400, 300);
+        setSize(300, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridLayout(4, 2));
 
@@ -40,6 +40,13 @@ public class BudgetApp extends JFrame {
         add(passwordField);
         add(loginButton);
         add(signUpButton);
+        getContentPane().setBackground(Color.LIGHT_GRAY);//changes background color of the login screen to light gray
+        loginButton.setBackground(Color.DARK_GRAY);//sets background of login button to dark gray
+        loginButton.setForeground(Color.WHITE); // Sets up foreground color of login button
+
+        signUpButton.setBackground(Color.DARK_GRAY);// changes background color of sign up button to dark gray
+        signUpButton.setForeground(Color.WHITE); // changes foreground color of sign up button to white
+
 
         loginButton.addActionListener(e -> {
             String username = usernameField.getText();
@@ -67,10 +74,12 @@ public class BudgetApp extends JFrame {
         revalidate();
         repaint();
 
-        setTitle("M-Pesa Budgeting Application");
+        setTitle("Budgeting Application");
         setSize(500, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+
+
 
         displayArea = new JTextArea();
         displayArea.setEditable(false);
@@ -107,6 +116,7 @@ public class BudgetApp extends JFrame {
 
         addButton.addActionListener(new AddTransactionListener());
         balanceButton.addActionListener(new BalanceButtonListener());
+        getContentPane().setBackground(Color.lightGray);
 
         setVisible(true);
     }

@@ -1,6 +1,6 @@
 public class User {
     private String username;
-    private String password; // Note: In a real app, passwords MUST be hashed
+    private String password;
 
     public User(String username, String password) {
         this.username = username;
