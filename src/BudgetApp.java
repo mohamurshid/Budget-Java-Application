@@ -2,8 +2,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.Map;
 
 public class BudgetApp extends JFrame {
     private Budget budget;
@@ -11,11 +9,11 @@ public class BudgetApp extends JFrame {
     private JTextField amountField;
     private JTextField descriptionField;
     private JComboBox<String> typeComboBox;
-    private Map<String, User> users;
     private User currentUser;
+    private UserDAO userDAO;
 
     public BudgetApp() {
-        users = new HashMap<>();
+        userDAO = new UserDAO();
         budget = new Budget();
         setupLoginScreen();
     }
@@ -40,13 +38,13 @@ public class BudgetApp extends JFrame {
         add(passwordField);
         add(loginButton);
         add(signUpButton);
-        getContentPane().setBackground(Color.LIGHT_GRAY);//changes background color of the login screen to light gray
-        loginButton.setBackground(Color.DARK_GRAY);//sets background of login button to dark gray
-        loginButton.setForeground(Color.WHITE); // Sets up foreground color of login button
 
-        signUpButton.setBackground(Color.DARK_GRAY);// changes background color of sign up button to dark gray
-        signUpButton.setForeground(Color.WHITE); // changes foreground color of sign up button to white
+        getContentPane().setBackground(Color.LIGHT_GRAY);
+        loginButton.setBackground(Color.DARK_GRAY);
+        loginButton.setForeground(Color.WHITE);
 
+        signUpButton.setBackground(Color.DARK_GRAY);
+        signUpButton.setForeground(Color.WHITE);
 
         loginButton.addActionListener(e -> {
             String username = usernameField.getText();
@@ -67,6 +65,8 @@ public class BudgetApp extends JFrame {
                 JOptionPane.showMessageDialog(this, "Username already exists");
             }
         });
+
+        signUpButton.addActionListener(e -> showSignUpForm());
     }
 
     private void setupBudgetScreen() {
@@ -78,8 +78,7 @@ public class BudgetApp extends JFrame {
         setSize(500, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-
-
+        getContentPane().setBackground(Color.LIGHT_GRAY);
 
         displayArea = new JTextArea();
         displayArea.setEditable(false);
@@ -87,7 +86,6 @@ public class BudgetApp extends JFrame {
         add(scrollPane, BorderLayout.CENTER);
 
         JPanel inputPanel = new JPanel(new GridLayout(3, 2));
-
         JLabel amountLabel = new JLabel("Amount:");
         amountField = new JTextField();
         JLabel descriptionLabel = new JLabel("Description:");
@@ -95,6 +93,10 @@ public class BudgetApp extends JFrame {
         JLabel typeLabel = new JLabel("Type:");
         String[] types = {"Income", "Expense"};
         typeComboBox = new JComboBox<>(types);
+
+        amountLabel.setForeground(Color.BLACK);
+        descriptionLabel.setForeground(Color.BLACK);
+        typeLabel.setForeground(Color.BLACK);
 
         inputPanel.add(amountLabel);
         inputPanel.add(amountField);
@@ -109,6 +111,12 @@ public class BudgetApp extends JFrame {
         JButton addButton = new JButton("Add Transaction");
         JButton balanceButton = new JButton("Show Balance");
 
+        addButton.setBackground(Color.DARK_GRAY);
+        addButton.setForeground(Color.WHITE);
+
+        balanceButton.setBackground(Color.DARK_GRAY);
+        balanceButton.setForeground(Color.WHITE);
+
         buttonPanel.add(addButton);
         buttonPanel.add(balanceButton);
 
@@ -116,21 +124,72 @@ public class BudgetApp extends JFrame {
 
         addButton.addActionListener(new AddTransactionListener());
         balanceButton.addActionListener(new BalanceButtonListener());
-        getContentPane().setBackground(Color.lightGray);
 
         setVisible(true);
     }
 
+    private void showSignUpForm() {
+        JDialog signUpDialog = new JDialog(this, "Sign Up", true);
+        signUpDialog.setSize(400, 300);
+        signUpDialog.setLayout(new GridLayout(6, 2));
+
+        JLabel firstNameLabel = new JLabel("First Name:");
+        JTextField firstNameField = new JTextField();
+        JLabel lastNameLabel = new JLabel("Last Name:");
+        JTextField lastNameField = new JTextField();
+        JLabel emailLabel = new JLabel("Email:");
+        JTextField emailField = new JTextField();
+        JLabel passwordLabel = new JLabel("Password:");
+        JPasswordField passwordField = new JPasswordField();
+        JLabel confirmPasswordLabel = new JLabel("Confirm Password:");
+        JPasswordField confirmPasswordField = new JPasswordField();
+
+        JButton submitButton = new JButton("Submit");
+        JButton cancelButton = new JButton("Cancel");
+
+        signUpDialog.add(firstNameLabel);
+        signUpDialog.add(firstNameField);
+        signUpDialog.add(lastNameLabel);
+        signUpDialog.add(lastNameField);
+        signUpDialog.add(emailLabel);
+        signUpDialog.add(emailField);
+        signUpDialog.add(passwordLabel);
+        signUpDialog.add(passwordField);
+        signUpDialog.add(confirmPasswordLabel);
+        signUpDialog.add(confirmPasswordField);
+        signUpDialog.add(submitButton);
+        signUpDialog.add(cancelButton);
+
+        submitButton.addActionListener(e -> {
+            String firstName = firstNameField.getText();
+            String lastName = lastNameField.getText();
+            String email = emailField.getText();
+            String password = new String(passwordField.getPassword());
+            String confirmPassword = new String(confirmPasswordField.getPassword());
+
+            if (password.equals(confirmPassword)) {
+                if (signUp(email, password)) {
+                    JOptionPane.showMessageDialog(signUpDialog, "Sign up successful. You can now log in.");
+                    signUpDialog.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(signUpDialog, "Email already exists.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(signUpDialog, "Passwords do not match.");
+            }
+        });
+
+        cancelButton.addActionListener(e -> signUpDialog.dispose());
+
+        signUpDialog.setVisible(true);
+    }
+
     private boolean signUp(String username, String password) {
-        if (users.containsKey(username)) {
-            return false;
-        }
-        users.put(username, new User(username, password));
-        return true;
+        return userDAO.signUp(username, password);
     }
 
     private boolean login(String username, String password) {
-        User user = users.get(username);
+        User user = userDAO.getUser(username);
         if (user != null && user.getPassword().equals(password)) {
             currentUser = user;
             return true;
@@ -141,14 +200,18 @@ public class BudgetApp extends JFrame {
     private class AddTransactionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            String type = (String) typeComboBox.getSelectedItem();
-            double amount = Double.parseDouble(amountField.getText());
-            String description = descriptionField.getText();
-            budget.addTransaction(type, amount, description);
+            try {
+                String type = (String) typeComboBox.getSelectedItem();
+                double amount = Double.parseDouble(amountField.getText());
+                String description = descriptionField.getText();
+                budget.addTransaction(type, amount, description);
 
-            displayArea.append(type + ": " + amount + " - " + description + "\n");
-            amountField.setText("");
-            descriptionField.setText("");
+                displayArea.append(type + ": " + amount + " - " + description + "\n");
+                amountField.setText("");
+                descriptionField.setText("");
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(BudgetApp.this, "Invalid amount format.");
+            }
         }
     }
 

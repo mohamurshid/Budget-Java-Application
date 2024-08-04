@@ -3,7 +3,7 @@ import java.util.Date;
 public class Transaction {
     private static int counter = 0;
     private int id;
-    private String type; // "income" or "expense"
+    private String type; // income or expense
     private double amount;
     private String description;
     private Date date;
